@@ -60,7 +60,6 @@ class BrickMiner():
     def get_sentiment_data_and_metrics(self):
         sentiment_analyser_object =  SentimentAnalyser(self.data, self.n_sentiment_labels)
 
-        # st.info("Fetching Sentiment for all feedback.. Please wait..")
         self.positive, self.negative, self.neutral = sentiment_analyser_object.get_sentiment()
 
         sentiment_analyser_object.show_sentiment_metrics() #Shows sentiment splitup
@@ -73,8 +72,7 @@ class BrickMiner():
         
         #Negative
         try:
-            if len(self.negative)>0:
-                
+            if len(self.negative)>0:                
                 self.topic_data_neg = topic_modelling_object.get_analysis(df = self.negative,what = 'complaints')
             
         except:
@@ -82,8 +80,7 @@ class BrickMiner():
 
         #Positive
         try:
-            if len(self.positive)>0:
-                
+            if len(self.positive)>0:                
                 self.topic_data_pos = topic_modelling_object.get_analysis(df = self.positive,what = 'positives')
             
         except:
@@ -96,14 +93,18 @@ class BrickMiner():
 
             reviews_summary = topic_processor_object.get_topic_priority_and_percentage(df)
 
-            review_summaried_button = download_button(reviews_summary,f'topicwise_data_{what}.csv',f'Download topic wise results for {what}')
-            st.markdown(review_summaried_button, unsafe_allow_html=True)     
+            if what == 'complaints':
+                self.complaints_topics = reviews_summary                
+            elif what == 'positives':
+                self.positives_topics = reviews_summary                
+
 
         #Negative
         if len(self.negative) >0:    
             
             run_topic_processing_helper(df = self.negative,what = 'complaints')
             logging.info("Got Summary and Priority Percentage for Negative")
+
 
         #Positive
         if len(self.positive) >0:    
@@ -122,8 +123,7 @@ class BrickMiner():
             # Negative
             
             self.theme_data_neg = theme_modelling_object.themify(self.topic_data_neg)
-            neg_theme_results_df_button_str = download_button(self.theme_data_neg,'themewise_complaints.csv','Download theme wise results for complaints')
-            st.markdown(neg_theme_results_df_button_str, unsafe_allow_html=True) 
+
             if display:
                 theme_modelling_object.display_theme_data(self.theme_data_neg)
             logging.info("Theme Modelling done for Negative")
@@ -132,11 +132,38 @@ class BrickMiner():
             # Positive
             
             self.theme_data_pos = theme_modelling_object.themify(self.topic_data_pos)
-            pos_theme_results_df_button_str = download_button(self.theme_data_pos,'themewise_positive.csv','Download theme wise results for positives')
-            st.markdown(pos_theme_results_df_button_str, unsafe_allow_html=True)
+
             if display:
                 theme_modelling_object.display_theme_data(self.theme_data_pos)
             logging.info("Theme Modelling done for Positive")
+
+ 
+
+    def structure_output(self):
+
+        def structure_output_helper(theme_data,topic_data):
+            theme_data['Topics_list']= theme_data['TopicsDataframe'].apply(lambda x: list(x['topic']))
+            theme_data_exploded = theme_data.explode('Topics_list').copy()
+            topic_subtopic = topic_data.merge(theme_data_exploded, left_on = 'topics',right_on = 'Topics_list', how = "outer")
+            topic_subtopic_final = topic_subtopic[['Theme','n_Reviews','topics','n_reviews_for_this_topic','raw_reviews','summaried_reviews']].copy()
+            topic_subtopic_final.sort_values(by = ['n_Reviews','Theme'],ascending = False, inplace = True)
+
+            topic_subtopic_final.columns = ['Topic name','Number of reviews for theme','Topic name','Number of reviews for topic','Original reviews','Summary']
+
+            return topic_subtopic_final        
+        
+        if len(self.topic_data_neg) >0 :
+            negative_output = structure_output_helper(self.theme_data_neg,self.complaints_topics)
+
+        if len(self.topic_data_pos) >0 : 
+            positive_output = structure_output_helper(self.theme_data_pos,self.positives_topics)
+
+        negative_output_str = download_button(negative_output,'negative_output.csv','Download results for complaints')
+        st.markdown(negative_output_str, unsafe_allow_html=True) 
+
+        positive_output_str = download_button(positive_output,'positive_output.csv','Download results for positives')
+        st.markdown(positive_output_str, unsafe_allow_html=True)         
+    
 
 
     def run(self):
@@ -165,6 +192,7 @@ class BrickMiner():
             
             with st.spinner('Step 4/4 in progress'):
                 self.run_theme_modelling(display=False)
+                self.structure_output()
             
             warning_container.success("✅ Analysis completed successfully!")
 

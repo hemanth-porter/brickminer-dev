@@ -9,6 +9,7 @@ def timer(func):
         result = func(*args, **kwargs)
         end_time = time.time()
         print('Elapsed time: {} seconds'.format(end_time - start_time))
+        logging.info('Elapsed time: {} seconds'.format(end_time - start_time))
         return result
     return wrapper
 
@@ -26,6 +27,7 @@ def retry(func):
             while count < 5:
                 try:
                     result = func(*args, **kwargs)
+                    logging.info("Success")
                     return result    
 
                 except openai.error.RateLimitError as e:

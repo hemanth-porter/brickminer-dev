@@ -33,8 +33,7 @@ import logging
 
 class ThemeModelling():
 
-    def validate_theme_topics(self,my_topics_list,theme_repsose_dict):
-
+    def validate_theme_topics(self,my_topics_list,theme_repsose_dict):        
         #Fetch the topics from the reponse
         themes_names = list(theme_repsose_dict.keys())
 
@@ -49,7 +48,8 @@ class ThemeModelling():
 
     def theme_finder(self, my_topics_list):   
 
-        llm_response_object = LLMResponse()     
+        llm_response_object = LLMResponse()
+     
         
         theme_repsose_dict = llm_response_object.ask_gpt(theme_finder_prompt, my_topics_list, is_eval = True, gpt4= True)
         

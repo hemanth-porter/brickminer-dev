@@ -104,9 +104,10 @@ class TopicModelling():
     def get_analysis(self, df, what  ):
         
         failed_indx = []
-
-        # status_text = st.text('0%')
-        # progress_bar = st.progress(0)
+        # progress_container = st.empty()
+        # text_container = st.empty()
+        # status_text = text_container.text('0%')
+        # progress_bar = status_text.progress(0)
 
         df['error'] = np.nan
         df['second_error'] = np.nan

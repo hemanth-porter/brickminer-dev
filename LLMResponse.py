@@ -9,7 +9,7 @@ from transformers import AutoTokenizer, AutoConfig
 import openai
 import string
 import pandas as pd 
-import os  
+import os    
 from tqdm import tqdm
 import nltk 
 from nltk.stem import WordNetLemmatizer  
@@ -38,7 +38,7 @@ from helper_utils import timer, retry
 
 class LLMResponse():
         @retry
-        def ask_gpt(self,system_instruction, list_of_reviews,return_type = None, is_eval = False, gpt4 = True ):
+        def ask_gpt(self,system_instruction, list_of_reviews,return_type = None, is_eval = False, gpt4 = False ):
             if gpt4 == False:
                 response = openai.ChatCompletion.create(
                     model='gpt-3.5-turbo',
