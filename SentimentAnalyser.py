@@ -33,9 +33,8 @@ nltk.download('wordnet')
 
 import logging
 
-
 from config import model_path
-from config import API_KEY
+
 from streamlit_download import download_button
 from helper_utils import timer
 

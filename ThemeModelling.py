@@ -26,7 +26,6 @@ import streamlit as st
 
 
 from config import model_path
-from config import API_KEY
 from streamlit_download import download_button
 from constants import theme_finder_prompt
 from LLMResponse import LLMResponse
@@ -132,7 +131,7 @@ class ThemeModelling():
         st.write(topic_contri_df)
 
 
-    def display_theme_data(self, df):        
+    def display_theme_data(self, df):      
 
         df.sort_values(by = 'n_Reviews' )
 

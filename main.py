@@ -1,32 +1,14 @@
 import logging
-import functools
+my_logger = logging.getLogger()
+
+import helper_utils
+
 import time
 import numpy as np
-from transformers import pipeline
-from transformers import AutoModelForSequenceClassification
-from transformers import TFAutoModelForSequenceClassification
-from transformers import AutoTokenizer, AutoConfig
-import openai
-import string
-import pandas as pd 
-import os  
-from tqdm import tqdm
-import nltk 
-from nltk.stem import WordNetLemmatizer  
-from nltk.corpus import stopwords  
-import string 
-from tqdm import tqdm
-import re 
-import gensim 
-from gensim import corpora, models   
-from nltk.tokenize import word_tokenize 
-from nltk.stem import PorterStemmer 
-from scipy.special import softmax
-import pdb
+import pandas as pd  
 import streamlit as st
 
 from config import model_path
-from config import API_KEY
 from streamlit_download import download_button
 
 from DataLoader import DataLoader
@@ -36,7 +18,11 @@ from TopicProcessing import TopicProcessing
 from ThemeModelling import ThemeModelling
 
 
-my_logger = logging.getLogger()
+st.set_page_config(
+    page_title="Brick Miner",
+    page_icon="🔍"
+)
+
 
 if not my_logger.handlers:
     my_logger.setLevel(logging.INFO)
@@ -51,6 +37,7 @@ if not my_logger.handlers:
 
 class BrickMiner():
     def __init__(self):
+        
         
         self.data = None
         self.continue_pressed = False
@@ -73,7 +60,7 @@ class BrickMiner():
     def get_sentiment_data_and_metrics(self):
         sentiment_analyser_object =  SentimentAnalyser(self.data, self.n_sentiment_labels)
 
-        st.info("Fetching Sentiment for all feedback.. Please wait..")
+        # st.info("Fetching Sentiment for all feedback.. Please wait..")
         self.positive, self.negative, self.neutral = sentiment_analyser_object.get_sentiment()
 
         sentiment_analyser_object.show_sentiment_metrics() #Shows sentiment splitup
@@ -87,18 +74,18 @@ class BrickMiner():
         #Negative
         try:
             if len(self.negative)>0:
-                st.info("Fetching Topics for negative feedback.. Please wait..")
+                
                 self.topic_data_neg = topic_modelling_object.get_analysis(df = self.negative,what = 'complaints')
-            # st.write(self.topic_data_neg)
+            
         except:
             my_logger.error("Failed TopicModelling for Negative")
 
         #Positive
         try:
             if len(self.positive)>0:
-                st.info("Fetching Topics for positive feedback.. Please wait..")
+                
                 self.topic_data_pos = topic_modelling_object.get_analysis(df = self.positive,what = 'positives')
-            # st.write(self.topic_data_pos)
+            
         except:
             my_logger.error("Failed TopicModelling for Positive")
 
@@ -114,17 +101,17 @@ class BrickMiner():
 
         #Negative
         if len(self.negative) >0:    
-            st.info("Fetching summary for negative feedback topics.. Please wait..")
+            
             run_topic_processing_helper(df = self.negative,what = 'complaints')
             logging.info("Got Summary and Priority Percentage for Negative")
 
         #Positive
         if len(self.positive) >0:    
-            st.info("Fetching summary for positive feedback topics.. Please wait..")
+            
             run_topic_processing_helper(df = self.positive,what = 'positives')
             logging.info("Got Summary and Priority Percentage for Positive")
 
-    def run_theme_modelling(self):
+    def run_theme_modelling(self,display = False):
         """
         Runs theme finder on Topics to find the similar topics and cluster into themes.
         Also, Gives a download button to download theme-wise results
@@ -133,25 +120,27 @@ class BrickMiner():
 
         if len(self.topic_data_neg) >0 :
             # Negative
-            st.info("Fetching Themes for negative feedback.. Please wait..")
+            
             self.theme_data_neg = theme_modelling_object.themify(self.topic_data_neg)
             neg_theme_results_df_button_str = download_button(self.theme_data_neg,'themewise_complaints.csv','Download theme wise results for complaints')
             st.markdown(neg_theme_results_df_button_str, unsafe_allow_html=True) 
-            theme_modelling_object.display_theme_data(self.theme_data_neg)
+            if display:
+                theme_modelling_object.display_theme_data(self.theme_data_neg)
             logging.info("Theme Modelling done for Negative")
 
         if len(self.topic_data_pos) >0 :
             # Positive
-            st.info("Fetching Themes for positive feedback.. Please wait..")
+            
             self.theme_data_pos = theme_modelling_object.themify(self.topic_data_pos)
             pos_theme_results_df_button_str = download_button(self.theme_data_pos,'themewise_positive.csv','Download theme wise results for positives')
             st.markdown(pos_theme_results_df_button_str, unsafe_allow_html=True)
-            theme_modelling_object.display_theme_data(self.theme_data_pos)
+            if display:
+                theme_modelling_object.display_theme_data(self.theme_data_pos)
             logging.info("Theme Modelling done for Positive")
 
 
     def run(self):
-
+        analysis_completed = st.session_state.get("analysis_completed", False)
         self.load_data()
         if self.data is not None :
             my_logger.info(f"Uploaded file rows - {len(self.data)}")
@@ -159,15 +148,25 @@ class BrickMiner():
             memory_usage_bytes = self.data.memory_usage().sum()      
             memory_usage_mb = memory_usage_bytes / (1024 * 1024) # Convert from bytes to megabytes
 
-            my_logger.info(f"Uploaded file size - {memory_usage_mb} MB")                
+            my_logger.info(f"Uploaded file size - {memory_usage_mb} MB")                            
 
         if ( self.data is not None ) & ( self.continue_pressed ):
-            self.get_sentiment_data_and_metrics()
-            self.run_topic_modelling()
-            self.run_topic_processing()
-            self.run_theme_modelling()
+            warning_container = st.empty()
+            warning_container.warning('Analysing data.. This might take a while!', icon="⚠️")
 
+            with st.spinner('Step 1/4 in progress'):
+                self.get_sentiment_data_and_metrics()
+
+            with st.spinner('Step 2/4 in progress'):
+                self.run_topic_modelling()
             
+            with st.spinner('Step 3/4 in progress'):
+                self.run_topic_processing()
+            
+            with st.spinner('Step 4/4 in progress'):
+                self.run_theme_modelling(display=False)
+            
+            warning_container.success("✅ Analysis completed successfully!")
 
 if __name__ == '__main__':
     try:

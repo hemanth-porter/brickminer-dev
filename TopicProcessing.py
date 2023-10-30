@@ -27,7 +27,6 @@ import streamlit as st
 import logging
 
 from config import model_path
-from config import API_KEY
 from streamlit_download import download_button
 from helper_utils import retry, timer
 from LLMResponse import LLMResponse
@@ -56,8 +55,8 @@ class TopicProcessing():
                     message = response.choices[0]['message']['content']
 
                     summary_percnt_done = int(self.summary_count*100/self.summary_end)
-                    self.summary_progress_bar.progress(summary_percnt_done)
-                    self.summary_status_text.text(f'{summary_percnt_done}%') 
+                    # self.summary_progress_bar.progress(summary_percnt_done)
+                    # self.summary_status_text.text(f'{summary_percnt_done}%') 
 
                     self.summary_count = self.summary_count + 1
 
@@ -80,8 +79,8 @@ class TopicProcessing():
                 df_grouped['review_concat'] = df_grouped['review'].apply(lambda x: ",".join(x))
 
                 # st.write("Please wait fetching summaries of each topic..")
-                self.summary_status_text = st.text('0%')
-                self.summary_progress_bar = st.progress(0)
+                # self.summary_status_text = st.text('0%')
+                # self.summary_progress_bar = st.progress(0)
                 
                 self.summary_end = len(df_grouped)-1
                 df_grouped['summaried_reviews'] = df_grouped.apply(lambda x: self.get_summary(x), axis = 1)

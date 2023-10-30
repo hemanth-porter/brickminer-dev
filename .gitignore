@@ -1,2 +1,4 @@
 secret_keys.py
 models/
+*.log
+*.pyc

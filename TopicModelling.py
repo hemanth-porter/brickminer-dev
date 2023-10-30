@@ -26,10 +26,7 @@ import streamlit as st
 
 import logging
 
-
-
 from config import model_path
-from config import API_KEY
 from streamlit_download import download_button
 from helper_utils import retry, timer
 from LLMResponse import LLMResponse
@@ -108,8 +105,8 @@ class TopicModelling():
         
         failed_indx = []
 
-        status_text = st.text('0%')
-        progress_bar = st.progress(0)
+        # status_text = st.text('0%')
+        # progress_bar = st.progress(0)
 
         df['error'] = np.nan
         df['second_error'] = np.nan
@@ -119,8 +116,8 @@ class TopicModelling():
         for indx in range(len(df['review'])):
             
             percnt_done = int(indx *100 /(len(df['review'])-1))
-            progress_bar.progress(percnt_done)
-            status_text.text(f'{percnt_done}%') 
+            # progress_bar.progress(percnt_done)
+            # status_text.text(f'{percnt_done}%') 
 
             each_review = df['review'].iloc[indx]
             return_string = self.topic_modeling_gpt(each_review,what)

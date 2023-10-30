@@ -23,7 +23,7 @@ from nltk.tokenize import word_tokenize
 from nltk.stem import PorterStemmer 
 from scipy.special import softmax
 from config import model_path
-from config import API_KEY
+from secret_keys import API_KEY
 from streamlit_download import download_button
 import pdb
 import streamlit as st
@@ -38,7 +38,7 @@ from helper_utils import timer, retry
 
 class LLMResponse():
         @retry
-        def ask_gpt(self,system_instruction, list_of_reviews, is_eval = False, gpt4 = True ):
+        def ask_gpt(self,system_instruction, list_of_reviews,return_type = None, is_eval = False, gpt4 = True ):
             if gpt4 == False:
                 response = openai.ChatCompletion.create(
                     model='gpt-3.5-turbo',
@@ -65,12 +65,21 @@ class LLMResponse():
             #Then this code reruns and gpt shall give one without apostraphe
             if is_eval :
                 try:
-                    return eval(message)
+                    if return_type == None:
+                        return eval(message)
+                    else:
+                        if type(eval(message)) == return_type:
+                            return eval(message)
+                        else:
+                            logging.ERROR(f"ask_gpt returned type is incorrect. Requested {return_type}, returned {type(eval(message))}")
+                            raise TypeError(f"ask_gpt returned type is incorrect. Requested {return_type}, returned {type(eval(message))}")
+
+
                 except SyntaxError as e:
                     prompt = system_instruction + list_of_reviews + message
                     continue_message = self.continue_gpt(prompt)
 
-                return eval(message)                
+                return eval(message)               
                     
             return message        
 
