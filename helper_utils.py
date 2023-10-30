@@ -26,8 +26,7 @@ def retry(func):
 
             while count < 5:
                 try:
-                    result = func(*args, **kwargs)
-                    logging.info("Success")
+                    result = func(*args, **kwargs)                    
                     return result    
 
                 except openai.error.RateLimitError as e:

@@ -1,7 +1,10 @@
 import logging
+from secret_keys import aws_access_key_id,aws_secret_access_key
+
 my_logger = logging.getLogger()
 
 import helper_utils
+import boto3
 
 import time
 import numpy as np
@@ -26,10 +29,11 @@ st.set_page_config(
 
 if not my_logger.handlers:
     my_logger.setLevel(logging.INFO)
+    log_file_time = time.time()
 
     #Logs Filename, Time, LoggingLevel, Message, ModuleName, LineNo
     formatter = logging.Formatter("%(name)s : %(asctime)s : %(levelname)s : %(message)s : %(module)s : %(lineno)d")
-    file_handler = logging.FileHandler(f'BrickMiner_{time.time()}.log')
+    file_handler = logging.FileHandler(f'BrickMiner_{log_file_time}.log')
     file_handler.setFormatter(formatter)
     my_logger.addHandler(file_handler)
 
@@ -164,6 +168,16 @@ class BrickMiner():
         positive_output_str = download_button(positive_output,'positive_output.csv','Download results for positives')
         st.markdown(positive_output_str, unsafe_allow_html=True)         
     
+    def push_to_s3(self):
+        session = boto3.Session(
+        aws_access_key_id=aws_access_key_id,
+        aws_secret_access_key=aws_secret_access_key,
+        )
+        s3 = session.resource('s3')
+        s3.meta.client.upload_file(Filename=f'BrickMiner_{log_file_time}.log',
+                                    Bucket='brickminer-models',
+                                    Key=f'application-logs/BrickMiner_{log_file_time}.log')
+
 
 
     def run(self):
@@ -193,6 +207,7 @@ class BrickMiner():
             with st.spinner('Step 4/4 in progress'):
                 self.run_theme_modelling(display=False)
                 self.structure_output()
+                self.push_to_s3()
             
             warning_container.success("✅ Analysis completed successfully!")
 
