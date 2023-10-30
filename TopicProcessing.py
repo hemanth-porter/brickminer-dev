@@ -78,7 +78,7 @@ class TopicProcessing():
                 df_grouped['topic_percentage'] = df_grouped['sentiment'].apply(lambda x: x*100/df['review'].nunique())
                 df_grouped['review_concat'] = df_grouped['review'].apply(lambda x: ",".join(x))
 
-                st.write("Please wait fetching summaries of each topic..")
+                # st.write("Please wait fetching summaries of each topic..")
                 # self.summary_status_text = st.text('0%')
                 # self.summary_progress_bar = st.progress(0)
                 
